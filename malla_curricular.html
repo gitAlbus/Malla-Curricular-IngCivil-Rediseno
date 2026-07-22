@@ -308,13 +308,22 @@ RAW.forEach(o=>{
 /* ---------- Lógica de progreso ---------- */
 const approved=new Set();
 const prereqsMet=c=>byCode[c].prereq.every(p=>approved.has(p));
-const statusOf=c=>approved.has(c)?"approved":(prereqsMet(c)?"available":"locked");
+// Una materia con correquisito solo se habilita si su(s) correquisito(s) también pueden cursarse
+// (ya aprobados, o con sus propios prerrequisitos cumplidos). Si el compañero no puede, esta tampoco se enciende.
+const coreqOk=c=>byCode[c].coreq.every(rc=>approved.has(rc)||prereqsMet(rc));
+const statusOf=c=>approved.has(c)?"approved":((prereqsMet(c)&&coreqOk(c))?"available":"locked");
 function onClick(code){
   const st=statusOf(code);
   if(st==="locked"){
     nodeEl[code].classList.remove("shake");void nodeEl[code].offsetWidth;nodeEl[code].classList.add("shake");
     const f=byCode[code].prereq.filter(p=>!approved.has(p)).map(p=>byCode[p].n);
-    toast(`Bloqueada · faltan: <b>${f.slice(0,2).join(", ")}${f.length>2?"…":""}</b>`);return;
+    if(f.length){
+      toast(`Bloqueada · faltan: <b>${f.slice(0,2).join(", ")}${f.length>2?"…":""}</b>`);
+    }else{
+      const co=byCode[code].coreq.filter(rc=>!(approved.has(rc)||prereqsMet(rc))).map(rc=>byCode[rc].n);
+      toast(`Bloqueada · es correquisito de <b>${co.slice(0,2).join(", ")}${co.length>2?"…":""}</b>, que aún no se puede cursar`);
+    }
+    return;
   }
   const prev=new Set(RAW.map(o=>o.c).filter(c=>statusOf(c)==="available"));
   if(st==="approved")unapprove(code);else approved.add(code);
