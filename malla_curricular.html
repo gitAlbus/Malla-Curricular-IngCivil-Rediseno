@@ -141,7 +141,15 @@
 <div class="hint">Click en una materia · arrastra para mover · pellizca o rueda para zoom</div>
 
 <script>
-window.addEventListener('error',function(ev){var b=document.getElementById('__err');if(!b){b=document.createElement('div');b.id='__err';b.style.cssText='position:fixed;left:10px;right:10px;top:118px;z-index:9999;background:#fff;border:2px solid #c00;color:#900;padding:12px;border-radius:10px;font:13px system-ui;white-space:pre-wrap';document.body.appendChild(b);}b.textContent='Error: '+(ev.message||'')+' (línea '+(ev.lineno||'?')+')';});
+window.addEventListener('error',function(ev){
+  // El navegador reporta como "Script error." (sin archivo ni línea) los fallos que NO vienen
+  // de esta página — típicamente extensiones, bloqueadores de contenido o scripts de terceros.
+  // Ignoramos ese ruido y solo avisamos de errores que sí traen su ubicación real.
+  var isOpaqueNoise = (!ev.filename || ev.filename==='') && (!ev.lineno || ev.lineno===0);
+  if(isOpaqueNoise) return;
+  var b=document.getElementById('__err');if(!b){b=document.createElement('div');b.id='__err';b.style.cssText='position:fixed;left:10px;right:10px;top:118px;z-index:9999;background:#fff;border:2px solid #c00;color:#900;padding:12px;border-radius:10px;font:13px system-ui;white-space:pre-wrap';document.body.appendChild(b);}
+  b.textContent='Error: '+(ev.message||'')+' (línea '+(ev.lineno||'?')+')';
+});
 (function(){var f=document.getElementById('fallback');if(f)f.remove();})();
 const RAW = [
   {c:"19279",l:1,n:"Matemáticas Discretas",r:[]},
